@@ -143,7 +143,7 @@
     min-height: calc(20px * var(--hud));
   }
   .oc-item {
-    display: flex; align-items: center; gap: calc(6px * var(--hud));
+    display: flex; align-items: flex-start; gap: calc(6px * var(--hud));
     font-size: calc(9px * var(--hud)); color: #fff;
     white-space: nowrap;
     transition: opacity .35s ease, transform .35s ease, filter .35s ease;
@@ -183,6 +183,147 @@
   @keyframes barShine { to { transform: translateX(130%); } }
   .oc-fill.mid { background: linear-gradient(90deg, #ffd166, #ffe29a); }
   .oc-fill.low { background: linear-gradient(90deg, #ff2e6f, #ff6b6b); animation: barPulse .5s ease-in-out infinite; }
+
+  /* order chips now show the buyer's full brief for each item */
+  .oc-item-meta { display: flex; flex-direction: column; gap: calc(3px * var(--hud)); }
+  .oc-item-name { font-size: calc(7px * var(--hud)); color: rgba(255,255,255,.55); }
+  .oc-item-folder {
+    display: flex; align-items: center; gap: calc(5px * var(--hud));
+    font-size: calc(8px * var(--hud)); color: #fff; white-space: nowrap;
+  }
+  .oc-item-spec {
+    display: flex; align-items: center; gap: calc(4px * var(--hud));
+    font-size: calc(6px * var(--hud)); color: rgba(255,255,255,.5); white-space: nowrap;
+  }
+  .oc-item-folder .folder-ic { width: calc(15px * var(--hud)); height: calc(11px * var(--hud)); }
+  .oc-item-folder .folder-ic::before { width: calc(6px * var(--hud)); height: calc(3px * var(--hud)); top: calc(-3px * var(--hud)); }
+
+  /* ================= folder drawer (opens on the right machine) ================= */
+  #drawer {
+    position: absolute;
+    left: 0; top: 0;                    /* anchored to the machine by JS */
+    width: min(calc(680px * var(--hud)), 92vw);
+    transform: translate(-50%, -50%) scale(.12);
+    opacity: 0;
+    pointer-events: none;
+    transform-origin: center center;
+    background: linear-gradient(180deg, rgba(30,32,46,.97), rgba(12,14,22,.97));
+    border: 2px solid var(--dr-accent, #c5047e);
+    border-radius: calc(12px * var(--hud)) calc(12px * var(--hud)) 0 0;
+    padding: calc(12px * var(--hud)) calc(16px * var(--hud)) calc(12px * var(--hud));
+    box-shadow:
+      0 0 0 2px rgba(0,0,0,.55),
+      0 0 calc(26px * var(--hud)) var(--dr-glow, rgba(197,4,126,.45)),
+      0 calc(-10px * var(--hud)) calc(28px * var(--hud)) rgba(0,0,0,.6);
+    transition: transform .4s cubic-bezier(.34,1.45,.44,1), opacity .22s ease;
+    z-index: 9;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+  }
+  #drawer.open { transform: translate(-50%, -50%) scale(1); opacity: 1; pointer-events: auto; }
+  #drawer.shake { animation: drShake .4s linear; }
+  @keyframes drShake {
+    0%,100% { transform: translate(-50%, -50%); }
+    20% { transform: translate(calc(-50% - 14px), -50%); }
+    40% { transform: translate(calc(-50% + 12px), -50%); }
+    60% { transform: translate(calc(-50% - 8px), -50%); }
+    80% { transform: translate(calc(-50% + 4px), -50%); }
+  }
+  #drawer.dr-dimmed { opacity: .3; pointer-events: none; }
+  .dr-handle {
+    width: calc(64px * var(--hud)); height: calc(6px * var(--hud));
+    margin: calc(10px * var(--hud)) auto 0;
+    border-radius: calc(3px * var(--hud));
+    background: var(--dr-accent, #c5047e);
+    box-shadow: 0 0 calc(10px * var(--hud)) var(--dr-glow, rgba(197,4,126,.8));
+  }
+  .dr-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: calc(10px * var(--hud));
+    margin-bottom: calc(12px * var(--hud));
+  }
+  .dr-title {
+    font-size: calc(11px * var(--hud)); letter-spacing: .18em;
+    color: var(--dr-accent, #c5047e);
+    text-shadow: 0 0 calc(8px * var(--hud)) var(--dr-glow, rgba(197,4,126,.6));
+  }
+  .dr-sub { font-size: calc(7px * var(--hud)); color: rgba(255,255,255,.5); letter-spacing: .1em; white-space: nowrap; }
+  .dr-folders {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: calc(10px * var(--hud));
+  }
+  .dr-folder {
+    pointer-events: auto;
+    display: flex; flex-direction: column; align-items: flex-start;
+    gap: calc(5px * var(--hud));
+    padding: calc(8px * var(--hud)) calc(11px * var(--hud));
+    min-width: calc(150px * var(--hud));
+    background: rgba(255,255,255,.05);
+    border: 2px solid #3d3f4c;
+    border-radius: calc(7px * var(--hud));
+    color: #fff; font-size: calc(8px * var(--hud)); line-height: 1.4;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .dr-frow { display: flex; align-items: center; gap: calc(7px * var(--hud)); }
+  .dr-spec {
+    display: flex; align-items: center; gap: calc(5px * var(--hud));
+    font-size: calc(7px * var(--hud)); color: rgba(255,255,255,.8);
+    white-space: nowrap;
+  }
+  .color-dot {
+    flex: none;
+    width: calc(9px * var(--hud)); height: calc(9px * var(--hud));
+    border-radius: 2px;
+    border: 1px solid rgba(255,255,255,.4);
+    box-shadow: 0 0 calc(4px * var(--hud)) rgba(0,0,0,.4);
+  }
+  .dr-brand {
+    font-size: calc(7px * var(--hud));
+    color: var(--dr-accent, #c5047e);
+    text-shadow: 0 0 calc(6px * var(--hud)) var(--dr-glow, rgba(197,4,126,.5));
+    white-space: nowrap;
+  }
+  .dr-folder:hover {
+    border-color: var(--dr-accent, #c5047e);
+    box-shadow: 0 0 calc(12px * var(--hud)) var(--dr-glow, rgba(197,4,126,.5));
+    transform: translateY(-2px);
+  }
+  .dr-folder.wrong {
+    border-color: #ff2e6f; color: rgba(255,255,255,.35);
+    text-decoration: line-through;
+    box-shadow: 0 0 calc(10px * var(--hud)) rgba(255,46,111,.4);
+    cursor: default; transform: none;
+  }
+  .dr-folder.picked {
+    border-color: #39ff88;
+    box-shadow: 0 0 calc(16px * var(--hud)) rgba(57,255,136,.75);
+    transform: scale(1.07);
+    color: #7dffa8;
+  }
+  .dr-folder:disabled { pointer-events: none; }
+  /* tiny CSS folder icon (colored via --dr-accent) */
+  .folder-ic {
+    position: relative;
+    flex: none;
+    width: calc(20px * var(--hud)); height: calc(15px * var(--hud));
+    background: var(--dr-accent, #c5047e);
+    border-radius: 0 calc(3px * var(--hud)) calc(3px * var(--hud)) calc(3px * var(--hud));
+  }
+  .folder-ic::before {
+    content: '';
+    position: absolute; top: calc(-4px * var(--hud)); left: 0;
+    width: calc(8px * var(--hud)); height: calc(4px * var(--hud));
+    background: var(--dr-accent, #c5047e);
+    border-radius: calc(3px * var(--hud)) calc(3px * var(--hud)) 0 0;
+  }
+  .folder-ic::after {
+    content: '';
+    position: absolute; right: calc(3px * var(--hud)); top: calc(3px * var(--hud));
+    width: calc(7px * var(--hud)); height: calc(8px * var(--hud));
+    background: rgba(255,255,255,.85);
+    border-radius: 1px;
+  }
 
   #hud-right {
     position: absolute;
@@ -281,7 +422,7 @@
     <div id="hud-center">
       <div id="order-card" class="hidden">
         <div class="oc-top">
-          <span class="oc-title">ORDER</span>
+          <span class="oc-title">BUYER'S BRIEF</span>
           <span class="oc-time" id="ocTime">--</span>
         </div>
         <div class="oc-items" id="ocItems"></div>
@@ -294,6 +435,15 @@
       </div>
       <button id="pauseBtn" class="pause-btn" type="button" aria-label="Pause game">&#9208;</button>
     </div>
+  </div>
+  <!-- folder drawer: pops out of the machine when the order reaches it -->
+  <div id="drawer" class="hidden" aria-hidden="true">
+    <div class="dr-head">
+      <span class="dr-title" id="drTitle">DRAWER</span>
+      <span class="dr-sub">MATCH THE BUYER'S BRIEF</span>
+    </div>
+    <div class="dr-folders" id="drFolders"></div>
+    <div class="dr-handle"></div>
   </div>
   <div id="banner"></div>
 </div>
@@ -364,6 +514,51 @@ var PRODUCTS = [
 var BY_ID = {};
 PRODUCTS.forEach(function (p) { BY_ID[p.id] = p; });
 
+/* every machine's drawer holds exactly 4 folders; each order is a DETAILED buyer's
+   brief: folder category + design color + logo alignment + brand name */
+var ALIGNS = ['Center', 'Lower', 'Higher'];
+var COLOR_HEX = {
+  Red: '#e74c3c', Navy: '#34495e', Green: '#27ae60', Yellow: '#f1c40f', Orange: '#e67e22',
+  'Sky Blue': '#5dade2', Teal: '#16a085', Sand: '#d4b483', Purple: '#8e44ad', Pink: '#e84393',
+  Black: '#333333', White: '#f2f2f2', Gold: '#d4af37', Blue: '#2e86c1', Gray: '#7f8c8d',
+  Brown: '#8b5a2b', Cream: '#f5e6c8'
+};
+var FOLDER_SPECS = {
+  cards: {
+    'Local Businesses': { colors: ['Red', 'Navy', 'Green'], brands: ['Corner Shop', 'Main St. Co.', 'City Works'] },
+    'Food&Drinks':      { colors: ['Yellow', 'Red', 'Orange'], brands: ['Taste Hub', 'Fresh Bite', 'Cafe Roya'] },
+    'Travel Companies': { colors: ['Sky Blue', 'Teal', 'Sand'], brands: ['Wanderlust', 'Globe Trot', 'Sun Trip'] },
+    'Entertainment':    { colors: ['Purple', 'Pink', 'Black'], brands: ['FunZone', 'Night Owl', 'Star Stage'] }
+  },
+  flyers: {
+    'Fashion':        { colors: ['Pink', 'White', 'Black'], brands: ['Vogue Pop', 'Urban Fit', 'Chic Boutique'] },
+    'Events':         { colors: ['Gold', 'Red', 'Blue'], brands: ['Big Bash', 'Night Fest', 'Mega Show'] },
+    'Jobs':           { colors: ['Blue', 'Gray', 'Green'], brands: ['WorkZone', 'Career Hub', 'Job Port'] },
+    'Special Offers': { colors: ['Red', 'Yellow', 'Green'], brands: ['Mega Deal', 'Flash Sale', 'Best Price'] }
+  },
+  posters: {
+    'Music':  { colors: ['Red', 'Purple', 'Gold'], brands: ['Harmony Records', 'SoundWave', 'Vinyl Dreams'] },
+    'Art':    { colors: ['Blue', 'Teal', 'Orange'], brands: ['Canvas Studio', 'Palette & Co', 'Brushworks'] },
+    'Menu':   { colors: ['Green', 'Brown', 'Cream'], brands: ['Bistro 7', 'Pasta House', 'Grill Corner'] },
+    'Brands': { colors: ['Gold', 'Black', 'White'], brands: ['Luxora', 'Prime Line', 'Apex Co.'] }
+  },
+  books: {
+    'History':        { colors: ['Brown', 'Gold', 'Green'], brands: ['Old World Press', 'Chronicle Books', 'Heritage Pub'] },
+    'Poetry':         { colors: ['Purple', 'Pink', 'Blue'], brands: ['Verse House', 'Rhyme & Co', 'Poet Lane'] },
+    'Biography':      { colors: ['Gray', 'Blue', 'Black'], brands: ['Life Story', 'True Tales', 'Great Lives'] },
+    'Children Books': { colors: ['Yellow', 'Red', 'Sky Blue'], brands: ['Story Land', 'Tiny Tales', 'Happy Pages'] }
+  },
+  packaging: {
+    'Pizza boxes':  { colors: ['Red', 'White', 'Green'], brands: ['Pizza Nova', 'Slice King', 'Dough Bros'] },
+    'Burger boxes': { colors: ['Yellow', 'Red', 'Brown'], brands: ['Burger Barn', 'Grill House', 'Beef & Bun'] },
+    'Sweets boxes': { colors: ['Pink', 'Purple', 'Gold'], brands: ['Sugar Pop', 'Candy Cloud', 'Sweet Nest'] },
+    'Moving boxes': { colors: ['Brown', 'Gray', 'Blue'], brands: ['MoveEasy', 'Box & Go', 'Swift Movers'] }
+  }
+};
+var FOLDERS = {};
+Object.keys(FOLDER_SPECS).forEach(function (mid) { FOLDERS[mid] = Object.keys(FOLDER_SPECS[mid]); });
+var lastFolder = {};   // avoids the same folder twice in a row per machine
+
 var MACHINES = [
   { id: 'cards',     x: 16,  y: 92,  w: 60, h: 46, flash: 0, buzz: 0 },
   { id: 'flyers',    x: 16,  y: 158, w: 60, h: 46, flash: 0, buzz: 0 },
@@ -380,8 +575,11 @@ function machineById(id) {
 var state = 'start';            // start | play | over
 var score = 0, best = 0, streak = 0, combo = 1;
 var hearts = 3, level = 1, ordersDone = 0;
-var order = null;               // { items:[id], done:[], timer, timerMax, n }
+var order = null;               // { items:[id], done:[], folders, specs, timer, timerMax, n }
 var orderDelay = 0;             // countdown before next order spawns
+var beltT = 0;                  // belt-ride progress of the current order's box
+var BELT_RIDE = 1.8;            // seconds the box rides along the belt
+var BELT_DROP = 0.35;           // seconds the box takes dropping off the belt
 var worker = { x: 192, y: 118, hx: 192, hy: 118, state: 'idle', pending: null, opT: 0, bob: 0, handoffDone: false };
 var runner = { x: 192, y: 48, hx: 192, hy: 48, state: 'wait', box: false, pending: null, opT: 0, bob: 0, dx: 0, dy: 0 };
 var particles = [], popups = [], flying = [];
@@ -416,8 +614,128 @@ var SFX = {
   miss:    function () { beep(200, .18, 'triangle', .2); beep(130, .26, 'triangle', .18, .14); },
   level:   function () { beep(523, .1, 'square', .15); beep(659, .1, 'square', .15, .1); beep(784, .16, 'square', .15, .2); },
   over:    function () { beep(392, .16, 'square', .16); beep(330, .16, 'square', .16, .15); beep(262, .16, 'square', .16, .3); beep(196, .4, 'square', .16, .45); },
-  click:   function () { beep(700, .04, 'square', .1); }
+  click:   function () { beep(700, .04, 'square', .1); },
+  pickup:  function () { beep(440, .06, 'square', .12); beep(660, .08, 'square', .12, .07); },
+  deny:    function () { beep(190, .08, 'square', .1); beep(160, .1, 'square', .09, .08); }
 };
+
+/* ---------------- Background music (procedural upbeat chiptune) ----------------
+   An original 126 BPM loop (C - G - Am - F) built from bass, arpeggio lead and
+   kick/snare/hats. Starts when the game starts, loops seamlessly, and only
+   stops when you lose or leave. The M mute silences it too. */
+var musicOn = false;
+var musicTimer = null;
+var musicLoopStart = 0;
+var musicNotes = [];              // scheduled osc/gain nodes, killed on stop
+var musicNoiseBuf = null;
+var BEAT = 60 / 126;              // 126 BPM
+var LOOP_BEATS = 16;              // 4 bars of 4/4
+var CHORDS = [                    // C, G, Am, F — upbeat progression
+  { bass: 48, arp: [60, 64, 67, 72] },   // C  (C3 / C E G C)
+  { bass: 43, arp: [55, 59, 62, 67] },   // G  (G2 / G B D G)
+  { bass: 45, arp: [57, 60, 64, 69] },   // Am (A2 / A C E A)
+  { bass: 41, arp: [53, 57, 60, 65] }    // F  (F2 / F A C F)
+];
+function midiF(n) { return 440 * Math.pow(2, (n - 69) / 12); }
+function makeNoiseBuf() {
+  if (!AC || musicNoiseBuf || !AC.createBuffer) return;
+  try {
+    var len = Math.floor((AC.sampleRate || 44100) * 0.25);
+    musicNoiseBuf = AC.createBuffer(1, len, AC.sampleRate || 44100);
+    var d = musicNoiseBuf.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  } catch (e) {}
+}
+function mNote(freq, when, dur, type, vol) {
+  if (muted || !AC) return;
+  var o = AC.createOscillator(), g = AC.createGain();
+  o.type = type || 'square'; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol || 0.12, when);
+  g.gain.exponentialRampToValueAtTime(0.001, when + dur);
+  o.connect(g); g.connect(AC.destination);
+  o.start(when); o.stop(when + dur + 0.02);
+  musicNotes.push({ o: o, g: g, end: when + dur });
+}
+function mKick(when) {
+  if (muted || !AC) return;
+  var o = AC.createOscillator(), g = AC.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(150, when);
+  o.frequency.exponentialRampToValueAtTime(45, when + 0.11);
+  g.gain.setValueAtTime(0.5, when);
+  g.gain.exponentialRampToValueAtTime(0.001, when + 0.13);
+  o.connect(g); g.connect(AC.destination);
+  o.start(when); o.stop(when + 0.15);
+  musicNotes.push({ o: o, g: g, end: when + 0.15 });
+}
+function mNoise(when, dur, vol, cutoff) {
+  if (muted || !AC || !musicNoiseBuf) return;
+  var s = AC.createBufferSource(), g = AC.createGain(), f = AC.createBiquadFilter();
+  s.buffer = musicNoiseBuf;
+  f.type = 'highpass'; f.frequency.value = cutoff || 5000;
+  g.gain.setValueAtTime(vol || 0.12, when);
+  g.gain.exponentialRampToValueAtTime(0.001, when + dur);
+  s.connect(f); f.connect(g); g.connect(AC.destination);
+  s.start(when); s.stop(when + dur + 0.02);
+  musicNotes.push({ o: s, g: g, end: when + dur });
+}
+function mSnare(when) {
+  mNoise(when, 0.11, 0.16, 2000);               // crack
+  mNote(midiF(230), when, 0.08, 'triangle', 0.2); // body
+}
+function scheduleLoop(t0) {
+  for (var b = 0; b < LOOP_BEATS; b++) {
+    var chord = CHORDS[Math.floor(b / 4)];
+    var t = t0 + b * BEAT;
+    // drums
+    if (b % 2 === 0) mKick(t);                  // kick on beats 1 & 3
+    if (b % 2 === 1) mSnare(t);                 // snare on beats 2 & 4
+    mNoise(t + BEAT / 2, 0.04, 0.05, 7000);     // offbeat hat
+    if (b === LOOP_BEATS - 1) mNoise(t, 0.22, 0.09, 6000);  // mini crash into the loop
+    // driving bass 8ths (octave pop on beat 3 of each bar)
+    mNote(midiF(chord.bass + (b % 4 === 2 ? 12 : 0)), t, BEAT * 0.45, 'square', 0.15);
+    mNote(midiF(chord.bass), t + BEAT / 2, BEAT * 0.4, 'square', 0.12);
+    // arpeggio lead 8ths (rest on the 'and' of beat 4 for syncopation)
+    if (b % 4 !== 3) {
+      var ar = chord.arp;
+      var ai = (b * 2) % 8;
+      mNote(midiF(ar[Math.floor(ai / 2)]), t, BEAT * 0.42, 'square', 0.08);
+      mNote(midiF(ar[Math.floor((ai + 1) / 2)]), t + BEAT / 2, BEAT * 0.36, 'triangle', 0.07);
+    }
+  }
+  mNote(midiF(84), t0, 0.16, 'triangle', 0.06); // sparkle at the loop head
+}
+function startMusic() {
+  if (!AC) return;
+  makeNoiseBuf();
+  musicOn = true;
+  var now = AC.currentTime + 0.05;
+  scheduleLoop(now);
+  musicLoopStart = now;
+  if (musicTimer === null && typeof window.setInterval === 'function') {
+    musicTimer = window.setInterval(function () {
+      if (!musicOn || !AC) return;
+      var next = musicLoopStart + LOOP_BEATS * BEAT;
+      if (next - AC.currentTime < 0.8) {   // queue the next loop just before this one ends
+        scheduleLoop(next);
+        musicLoopStart = next;
+      }
+    }, 200);
+  }
+}
+function stopMusic() {
+  musicOn = false;
+  if (musicTimer !== null && typeof window.clearInterval === 'function') {
+    window.clearInterval(musicTimer);
+    musicTimer = null;
+  }
+  var now = AC ? AC.currentTime : 0;
+  for (var i = 0; i < musicNotes.length; i++) {
+    var n = musicNotes[i];
+    try { if (n.end > now + 0.05) { n.o.stop(0); n.g.disconnect(); } } catch (e) {}
+  }
+  musicNotes = [];
+}
 
 /* ---------------- Difficulty ---------------- */
 function levelFor(done) { return 1 + Math.floor(done / 5); }
@@ -445,8 +763,24 @@ function makeOrder() {
   if (lvl >= 3 && Math.random() < Math.min(.55, (lvl - 2) * .12)) n = 2;
   if (lvl >= 6 && Math.random() < .15) n = 3;
   var items = pickDistinct(pool, Math.min(n, pool.length));
+  var folders = {}, specs = {};
+  for (var i = 0; i < items.length; i++) {
+    var list = FOLDERS[items[i]];
+    var fi = Math.floor(Math.random() * list.length);
+    if (list.length > 1 && fi === lastFolder[items[i]]) fi = (fi + 1) % list.length;
+    lastFolder[items[i]] = fi;
+    var folder = list[fi];
+    folders[items[i]] = folder;
+    var fs = FOLDER_SPECS[items[i]][folder];
+    specs[items[i]] = {
+      color: fs.colors[Math.floor(Math.random() * fs.colors.length)],
+      align: ALIGNS[Math.floor(Math.random() * ALIGNS.length)],
+      brand: fs.brands[Math.floor(Math.random() * fs.brands.length)]
+    };
+  }
   var tm = orderTime(lvl, items.length);
-  order = { items: items, done: [], timer: tm, timerMax: tm, n: items.length };
+  order = { items: items, done: [], folders: folders, specs: specs, timer: tm, timerMax: tm, n: items.length };
+  beltT = 0;                     // the new box starts its ride from the belt's left end
   SFX.order();
 }
 function nextOrderSoon() { order = null; orderDelay = 0.65; }
@@ -454,6 +788,8 @@ function nextOrderSoon() { order = null; orderDelay = 0.65; }
 /* ---------------- Game actions ---------------- */
 function startGame() {
   ensureAudio();
+  if (drawer) closeDrawer(true);
+  startMusic();
   score = 0; streak = 0; combo = 1; hearts = 3; level = 1; ordersDone = 0;
   order = null; orderDelay = 0.4; particles = []; popups = []; flying = [];
   worker.state = 'idle'; worker.pending = null; worker.handoffDone = false;
@@ -467,47 +803,61 @@ function startGame() {
   state = 'play';
   SFX.level();
 }
+function isCorrectMachine(mid) {
+  return !!(order && order.items.indexOf(mid) >= 0 && order.done.indexOf(mid) < 0);
+}
+/* order filed successfully: the right folder was picked in the drawer */
+function completeItem(mid) {
+  if (!order || state !== 'play') return;
+  var m = machineById(mid);
+  var prod = BY_ID[mid];
+  order.done.push(mid);
+  streak++;
+  combo = Math.min(5, 1 + Math.floor(streak / 2));
+  var pts = 10 * combo;
+  score += pts;
+  m.flash = 0.5;
+  spawnFlying(prod, m);
+  popup(prod.name, m, '#7dffa8');
+  popup('+' + pts + (combo > 1 ? '  x' + combo : ''), m, '#ffd166');
+  SFX.correct();
+  // drawer flow: the worker waited beside the machine -> send him back to his post
+  worker.pending = null; worker.handoffDone = false;
+  worker.state = 'walk'; worker.hx = 192; worker.hy = 118;
+  if (order.done.length === order.items.length) {
+    ordersDone++;
+    var nl = levelFor(ordersDone);
+    if (nl > level) {
+      level = nl;
+      SFX.level();                       // DOM banner + screen shake handled in updateHUD
+    }
+    burst(m.x + m.w / 2, m.y + 2, prod.color, 14);
+    smoke(m.x + m.w / 2, m.y, 8);
+    flashCard();
+    nextOrderSoon();
+  } else {
+    beltT = 0;                           // the next item's box rides the belt again
+  }
+}
+/* wrong machine (or wrong folder): penalty, no drawer for wrong machines */
+function wrongMachine(mid) {
+  if (!order || state !== 'play') return;
+  var m = machineById(mid);
+  streak = 0; combo = 1;
+  m.buzz = 0.5; m.flash = 0.3;
+  if (order) order.timer = Math.max(0.5, order.timer - 2);
+  shakeT = 0.28; flashT = 0.22;
+  popup('WRONG!  -2s', m, '#ff6b6b');
+  SFX.wrong();
+}
 function applyResult(mid) {
   if (!order || state !== 'play') return;
   if (order.done.indexOf(mid) >= 0) return;
-  var idx = order.items.indexOf(mid);
-  var m = machineById(mid);
-  if (idx >= 0) {
-    // SUCCESS
-    order.done.push(mid);
-    streak++;
-    combo = Math.min(5, 1 + Math.floor(streak / 2));
-    var pts = 10 * combo;
-    score += pts;
-    m.flash = 0.5;
-    var prod = BY_ID[mid];
-    spawnFlying(prod, m);
-    popup(prod.name, m, '#7dffa8');
-    popup('+' + pts + (combo > 1 ? '  x' + combo : ''), m, '#ffd166');
-    SFX.correct();
-    if (order.done.length === order.items.length) {
-      ordersDone++;
-      var nl = levelFor(ordersDone);
-      if (nl > level) {
-        level = nl;
-        SFX.level();                       // DOM banner + screen shake handled in updateHUD
-      }
-      burst(m.x + m.w / 2, m.y + 2, prod.color, 14);
-      smoke(m.x + m.w / 2, m.y, 8);
-      flashCard();
-      nextOrderSoon();
-    }
-  } else {
-    // WRONG
-    streak = 0; combo = 1;
-    m.buzz = 0.5; m.flash = 0.3;
-    if (order) order.timer = Math.max(0.5, order.timer - 2);
-    shakeT = 0.28; flashT = 0.22;
-    popup('WRONG!  -2s', m, '#ff6b6b');
-    SFX.wrong();
-  }
+  if (isCorrectMachine(mid)) completeItem(mid);
+  else wrongMachine(mid);
 }
 function missOrder() {
+  if (drawer) closeDrawer(true);
   hearts--;
   streak = 0; combo = 1;
   shakeT = 0.35; flashT = 0.3;
@@ -521,6 +871,7 @@ function missOrder() {
   runner.hx = 192; runner.hy = 48;
   if (hearts <= 0) {
     state = 'over';
+    stopMusic();                       // the music ends when you lose
     SFX.over();
     if (score > best) { best = score; try { localStorage.setItem(bestKey, best); } catch (e) {} }
   } else {
@@ -528,9 +879,16 @@ function missOrder() {
   }
 }
 function clickWorld(mid) {
+  if (drawer) return;                     // a drawer is open: finish picking a folder first
   if (!order) return;
   if (order.done.indexOf(mid) >= 0) return;
   if (runner.state === 'deliver' || runner.state === 'handoff') return;   // busy
+  if (!runner.box) {
+    // the order is still on the belt — pick it up before sending it to a machine
+    popup('PICK UP THE ORDER FIRST!', { x: WBW / 2, y: 84 }, '#ffd166');
+    SFX.deny();
+    return;
+  }
   var m = machineById(mid);
   // operator walks to the machine
   worker.pending = mid;
@@ -540,19 +898,189 @@ function clickWorld(mid) {
   worker.hy = m.y + m.h / 2 + 2;
   // runner carries the order over
   runner.pending = mid;
-  if (runner.box) {
-    runner.state = 'deliver';
-    runnerDeliverTarget(mid);
-  } else {
-    runner.state = 'fetch';
-    runner.hx = 192; runner.hy = 30;
-  }
+  runner.state = 'deliver';
+  runnerDeliverTarget(mid);
   SFX.click();
 }
 function runnerDeliverTarget(mid) {
   var dm = machineById(mid);
   runner.hx = dm.x + dm.w / 2 + 10; runner.hy = dm.y + dm.h / 2 + 2;   // stand IN FRONT (right side)
   runner.dx = dm.x + dm.w / 2 - 8; runner.dy = dm.y - 5;              // box lands on the machine top
+}
+
+/* ---------------- Belt box (order rides the conveyor, then you pick it up) ---------------- */
+/* the order's box rides along the belt from the left end to the centre, drops
+   off the belt edge, and waits — pulsing — until the player clicks to pick it up */
+function beltBoxPos() {
+  if (!order || runner.box || drawer) return null;
+  var x = 8, y = 14;                    // spawn: left end of the belt
+  if (beltT >= BELT_RIDE) {
+    x = 192;
+    if (beltT < BELT_RIDE + BELT_DROP) {
+      y = 14 + (beltT - BELT_RIDE) / BELT_DROP * (44 - 14);   // dropping off the belt edge
+    } else {
+      y = 44;                            // resting at the pickup point
+    }
+  } else {
+    x = 8 + beltT / BELT_RIDE * (192 - 8);                     // riding along the belt
+  }
+  return { x: x, y: y, ready: beltT >= BELT_RIDE + BELT_DROP };
+}
+function beltBoxHit(wx, wy) {
+  var b = beltBoxPos();
+  if (!b || !b.ready) return false;
+  return wx >= b.x - 20 && wx <= b.x + 20 && wy >= b.y - 9 && wy <= b.y + 9;
+}
+function pickUpBox() {
+  if (!order || state !== 'play' || drawer) return;
+  if (runner.box || runner.state === 'deliver' || runner.state === 'handoff' || runner.state === 'fetch') return;
+  if (!beltBoxPos() || !beltBoxPos().ready) return;
+  SFX.pickup();
+  popup('ORDER PICKED UP!', { x: 192, y: 58 }, '#7dffa8');
+  runner.state = 'fetch';
+  runner.hx = 192; runner.hy = 44;       // walk to the box, grab it, stand ready
+}
+/* ---------------- Folder drawer ----------------
+   When the order box reaches the RIGHT machine, its drawer slides open.
+   The player must click the folder named on the order card. Wrong folders
+   get crossed out (-2s each); the right one files the order away. */
+var drawer = null;   // { mid, correctIdx, wrong:[ruled-out indexes] } while a drawer is open
+
+function openDrawer(mid) {
+  if (!order || state !== 'play') return;
+  var m = machineById(mid);
+  if (!m) return;
+  var list = FOLDERS[mid];
+  var want = order.specs[mid];                       // the buyer's detailed brief
+  var cards = [];
+  for (var i = 0; i < list.length; i++) {
+    var folder = list[i];
+    if (folder === order.folders[mid]) {
+      // the correct spec card matches the brief exactly
+      cards.push({ folder: folder, color: want.color, align: want.align, brand: want.brand });
+    } else {
+      // decoy: plausible details, sometimes sharing a trait with the real brief
+      var cs = FOLDER_SPECS[mid][folder];
+      var spec = { folder: folder, color: '', align: '', brand: '' };
+      var tries = 0;
+      do {
+        spec.color = Math.random() < 0.4 ? want.color : cs.colors[Math.floor(Math.random() * cs.colors.length)];
+        spec.align = Math.random() < 0.4 ? want.align : ALIGNS[Math.floor(Math.random() * ALIGNS.length)];
+        spec.brand = cs.brands[Math.floor(Math.random() * cs.brands.length)];
+        tries++;
+      } while (tries < 6 && spec.color === want.color && spec.align === want.align && spec.brand === want.brand);
+      cards.push(spec);
+    }
+  }
+  drawer = { mid: mid, correctIdx: list.indexOf(order.folders[mid]), wrong: [], cards: cards };
+  if (drawer.correctIdx < 0) drawer.correctIdx = 0;   // safety fallback
+  // fair moment to read the brief before the clock bites
+  order.timer = Math.max(order.timer, 5);
+  // tint the drawer with the machine's color
+  var acc = BY_ID[mid].color;
+  if (hudEls.drawer && hudEls.drawer.style) {
+    hudEls.drawer.style.setProperty('--dr-accent', acc);
+    hudEls.drawer.style.setProperty('--dr-glow', 'rgba(' + hexRgb(acc) + ',0.55)');
+  }
+  if (hudEls.drTitle) hudEls.drTitle.textContent = BY_ID[mid].name.toUpperCase() + ' DRAWER';
+  buildDrawerFolders(cards);
+  showDrawer();
+  positionDrawer();
+  SFX.print();
+  popup('MATCH THE BRIEF!', { x: m.x + m.w / 2, y: m.y - 8 }, '#ffd166');
+}
+function buildDrawerFolders(cards) {
+  var box = hudEls.drFolders;
+  if (!box) return;
+  box.innerHTML = '';
+  for (var i = 0; i < cards.length; i++) {
+    var c = cards[i];
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'dr-folder';
+    var row = document.createElement('span');
+    row.className = 'dr-frow';
+    var ic = document.createElement('span');
+    ic.className = 'folder-ic';
+    var nm = document.createElement('span');
+    nm.className = 'dr-fname';
+    nm.textContent = c.folder;
+    row.appendChild(ic); row.appendChild(nm);
+    var sp = document.createElement('span');
+    sp.className = 'dr-spec';
+    var dot = document.createElement('span');
+    dot.className = 'color-dot';
+    dot.style.background = COLOR_HEX[c.color] || '#888888';
+    var txt = document.createElement('span');
+    txt.textContent = c.color + ' \u00B7 ' + c.align;
+    sp.appendChild(dot); sp.appendChild(txt);
+    var br = document.createElement('span');
+    br.className = 'dr-brand';
+    br.textContent = c.brand;
+    b.appendChild(row); b.appendChild(sp); b.appendChild(br);
+    b.addEventListener('click', (function (idx) { return function () { drawerPick(idx); }; })(i));
+    box.appendChild(b);
+  }
+}
+function showDrawer() {
+  if (!hudEls.drawer) { drawer = null; return; }
+  hudEls.drawer.classList.remove('hidden', 'shake');
+  void hudEls.drawer.offsetWidth;
+  hudEls.drawer.classList.add('open');
+  hudEls.drawer.setAttribute('aria-hidden', 'false');
+}
+/* anchor the drawer panel to the machine it popped out of */
+function positionDrawer() {
+  if (!drawer || !hudEls.drawer || !hudEls.drawer.style) return;
+  var m = machineById(drawer.mid);
+  if (!m) return;
+  var wrap = document.getElementById('wrap');
+  var hud = (wrap && wrap.clientWidth) ? wrap.clientWidth / 1536 : 1;
+  var cx = (m.x + m.w / 2) * 4 * hud;
+  var cy = (m.y + m.h / 2) * 4 * hud;
+  var pw = 680 * hud;
+  var ww = (wrap && wrap.clientWidth) ? wrap.clientWidth : 1536 * hud;
+  cx = Math.max(pw / 2 + 4, Math.min(ww - pw / 2 - 4, cx));
+  hudEls.drawer.style.left = cx + 'px';
+  hudEls.drawer.style.top = cy + 'px';
+  hudEls.drawer.style.width = pw + 'px';
+}
+function drawerPick(idx) {
+  if (!drawer || state !== 'play') return;
+  if (drawer.wrong.indexOf(idx) >= 0) return;            // already ruled out
+  var m = machineById(drawer.mid);
+  if (idx === drawer.correctIdx) {
+    // right folder: the order is filed away
+    var mid = drawer.mid;
+    closeDrawer(false, idx);
+    completeItem(mid);
+  } else {
+    // wrong folder: cross it out, -2s, shake the drawer, keep picking
+    drawer.wrong.push(idx);
+    var btn = hudEls.drFolders && hudEls.drFolders.children ? hudEls.drFolders.children[idx] : null;
+    if (btn && btn.classList) { btn.classList.add('wrong'); btn.disabled = true; }
+    if (m) { m.buzz = 0.5; m.flash = 0.3; }
+    if (order) order.timer = Math.max(0.5, order.timer - 2);
+    shakeT = 0.28; flashT = 0.22;
+    if (hudEls.drawer && hudEls.drawer.classList) {
+      hudEls.drawer.classList.remove('shake');
+      void hudEls.drawer.offsetWidth;
+      hudEls.drawer.classList.add('shake');
+    }
+    popup('WRONG FOLDER!  -2s', m || { x: WBW / 2, y: 100 }, '#ff6b6b');
+    SFX.wrong();
+  }
+}
+function closeDrawer(instant, pickedIdx) {
+  if (hudEls.drawer) {
+    if (!instant && pickedIdx != null) {
+      var btn = hudEls.drFolders && hudEls.drFolders.children ? hudEls.drFolders.children[pickedIdx] : null;
+      if (btn && btn.classList) btn.classList.add('picked');
+    }
+    hudEls.drawer.classList.remove('open', 'shake');
+    hudEls.drawer.setAttribute('aria-hidden', 'true');
+  }
+  drawer = null;
 }
 function moveToward(ent, tx, ty, speed, dt) {
   var dx = tx - ent.x, dy = ty - ent.y;
@@ -627,13 +1155,12 @@ function update(dt) {
     }
     worker.bob += dt * (worker.state === 'walk' ? 9 : 3);
 
-    // --- runner: fetch box from the belt, carry it to the clicked machine ---
+    // --- runner: fetches the box only after the PLAYER picks it up from the belt ---
     switch (runner.state) {
       case 'wait':
-        if (order && !runner.box) { runner.state = 'fetch'; runner.hx = 192; runner.hy = 30; }
-        break;
+        break;                                // waits at his post until the order is picked up
       case 'fetch':
-        if (moveToward(runner, 192, 30, 165, dt)) {
+        if (moveToward(runner, 192, 44, 165, dt)) {
           runner.box = true;
           if (runner.pending) {
             runner.state = 'deliver';
@@ -652,8 +1179,13 @@ function update(dt) {
         runner.opT -= dt;
         if (runner.opT <= 0) {
           runner.box = false;
-          worker.handoffDone = true;      // operator starts printing
-          SFX.print();
+          var hm = runner.pending;
+          if (isCorrectMachine(hm)) {
+            openDrawer(hm);               // right machine: the drawer slides out with its folders
+          } else {
+            worker.handoffDone = true;    // wrong machine: operator prints, penalty at the end
+            SFX.print();
+          }
           runner.state = 'return';
           runner.hx = 192; runner.hy = 48;
         }
@@ -674,6 +1206,8 @@ function update(dt) {
       order.timer -= dt;
       if (order.timer <= 0) { order.timer = 0; missOrder(); }
     }
+    // the order's box rides the belt until the player picks it up
+    if (order && !runner.box && !drawer) beltT += dt;
   }
 
   // machines decay
@@ -882,6 +1416,35 @@ function drawMachine(m) {
     rr(wctx, x + Math.random() * w, y - 2, 2, 2, '#ffffff');
     rr(wctx, x + Math.random() * w, y - 1, 2, 2, prod.color);
   }
+  // drawer OPEN: the front face (control panel) slides down out of the machine,
+  // revealing a dark cavity with the folder tabs peeking out
+  if (drawer && drawer.mid === m.id && state === 'play') {
+    var drop = 12 + 2 * Math.sin(t * 2.4);          // pull-out depth with a subtle bob
+    var cutY = y + h - 18;                          // where the face separates from the body
+    // cavity: dark interior revealed between body and pulled-out face
+    rr(wctx, bx + 2, cutY, w - 4, drop + 18, '#04050a');
+    rr(wctx, bx + 2, cutY, w - 4, 1, 'rgba(' + rgb + ',0.9)');
+    rr(wctx, bx + 2, cutY, w - 4, drop + 18, 'rgba(' + rgb + ',0.06)');
+    // folder tabs peeking out of the cavity, tinted per spec card
+    var stepW = (w - 10) / 4;
+    for (var ft = 0; ft < 4; ft++) {
+      var fcol = drawer.cards[ft] ? (COLOR_HEX[drawer.cards[ft].color] || '#888888') : '#888888';
+      rr(wctx, bx + 5 + ft * stepW + 1, cutY + 3, stepW - 2, drop + 12, '#1c2030');
+      rr(wctx, bx + 5 + ft * stepW + 1, cutY + 3, stepW - 2, 2, 'rgba(255,255,255,0.14)');
+      rr(wctx, bx + 5 + ft * stepW + 1, cutY + drop + 10, stepW - 2, 1, 'rgba(' + hexRgb(fcol) + ',0.75)');
+    }
+    // the drawer face itself (screen + edge), slid down with a handle
+    var fy = cutY + drop;
+    rr(wctx, bx, fy, w, 18, '#0c0e15');
+    rr(wctx, bx, fy, w, 1, 'rgba(' + rgb + ',0.9)');
+    rr(wctx, bx, fy, 2, 18, 'rgba(255,255,255,0.08)');
+    rr(wctx, bx + w - 2, fy, 2, 18, 'rgba(0,0,0,0.5)');
+    rr(wctx, bx + 6, fy + 3, w - 12, 9, '#05060a');
+    rr(wctx, bx + 8, fy + 5, w - 16, 5, active ? '#ffffff' : 'rgba(0,229,255,0.9)');
+    rr(wctx, bx + 8, fy + 8, w - 16, 1, 'rgba(0,0,0,0.45)');
+    rr(wctx, bx + w / 2 - 7, fy + 15, 14, 2, prod.color);      // drawer handle
+    rr(wctx, bx + w / 2 - 7, fy + 15, 14, 1, 'rgba(255,255,255,0.5)');
+  }
 }
 function hitMachine(m, wx, wy) {
   return wx >= m.x && wx <= m.x + m.w && wy >= m.y && wy <= m.y + m.h;
@@ -978,9 +1541,17 @@ function drawWorld() {
   drawFloor();
   drawConveyor();
   drawDust();
-  if (order && !runner.box && state === 'play') {
+  // the order's box rides the belt, drops off the edge, and waits to be picked up
+  var bbox = beltBoxPos();
+  if (bbox) {
     var bob = Math.sin(t * 6) * 1.5;
-    drawOrderBox(172, 12 + bob, 40, 18);
+    drawOrderBox(bbox.x - 20, bbox.y - 9 + bob, 40, 18);
+    if (bbox.ready) {
+      var pu = 0.5 + 0.5 * Math.sin(t * 5);
+      rr(wctx, bbox.x - 26, bbox.y + 10, 52, 2, 'rgba(255,209,102,' + (0.25 + 0.3 * pu).toFixed(2) + ')');
+      rr(wctx, bbox.x - 3, bbox.y + 8, 6, 2, 'rgba(255,209,102,' + (0.35 + 0.4 * pu).toFixed(2) + ')');
+      rr(wctx, bbox.x - 2, bbox.y - 12, 4, 4, 'rgba(255,209,102,' + (0.3 + 0.45 * pu).toFixed(2) + ')');
+    }
   }
 
   // LAYER 2 — entities, depth-sorted: machines anchor at their mid-line,
@@ -1220,9 +1791,9 @@ function drawStart() {
   }
 
   ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.font = font(8, true);
-  ctx.fillText('WRONG CLICK = -2s   |   MISSED ORDER = LOSE A HEART', VW / 2, cy + 226 * uiScale);
+  ctx.fillText('CLICK THE ORDER ON THE BELT, THEN MATCH THE BUYER\'S BRIEF', VW / 2, cy + 226 * uiScale);
   ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.font = font(8, true);
-  ctx.fillText('FASTER & TOUGHER ORDERS AS YOU LEVEL UP', VW / 2, cy + 246 * uiScale);
+  ctx.fillText('WRONG MACHINE OR FOLDER = -2s   |   MISSED ORDER = LOSE A HEART', VW / 2, cy + 246 * uiScale);
 
   if (best > 0) {
     ctx.fillStyle = '#ffd166'; ctx.font = font(9, true);
@@ -1260,7 +1831,7 @@ function drawOver() {
   var bw = 260 * uiScale, bh = 52 * uiScale;
   buttons = [
     { x: VW / 2 - bw / 2, y: cy + 240 * uiScale, w: bw, h: bh, label: 'PLAY AGAIN', size: 14, fn: startGame },
-    { x: VW / 2 - bw / 2, y: cy + 304 * uiScale, w: bw, h: bh, label: 'BACK TO SITE', size: 11, fn: function () { window.location.href = 'index.html'; } }
+    { x: VW / 2 - bw / 2, y: cy + 304 * uiScale, w: bw, h: bh, label: 'BACK TO SITE', size: 11, fn: function () { stopMusic(); window.location.href = 'index.html'; } }
   ];
   drawButtons();
 }
@@ -1395,7 +1966,10 @@ var hudEls = {
   fill: document.getElementById('ocFill'),
   bar: document.getElementById('healthbar'),
   pause: document.getElementById('pauseBtn'),
-  banner: document.getElementById('banner')
+  banner: document.getElementById('banner'),
+  drawer: document.getElementById('drawer'),
+  drTitle: document.getElementById('drTitle'),
+  drFolders: document.getElementById('drFolders')
 };
 var hudSegs = [];
 if (hudEls.bar && hudEls.bar.querySelectorAll) {
@@ -1432,6 +2006,9 @@ function flashCard() {
     if (hudEls.card && hudEls.card.classList) hudEls.card.classList.remove('flash');
   }, 450);
 }
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 function paintIcon(cv, id) {
   if (!cv || !cv.getContext) return;
   var c = cv.getContext('2d');
@@ -1444,6 +2021,12 @@ function updateHUD() {
   hudEls.root.classList.toggle('hud-hidden', !playing);
   hudEls.root.classList.toggle('dimmed', state === 'paused');
   if (hudEls.pause) hudEls.pause.textContent = state === 'paused' ? '\u25B6' : '\u23F8';
+  // folder drawer: close it on game over, dim it while paused
+  if (!playing) {
+    if (drawer) closeDrawer(true);
+  } else if (hudEls.drawer && hudEls.drawer.classList) {
+    hudEls.drawer.classList.toggle('dr-dimmed', state === 'paused');
+  }
   if (!playing) return;
 
   // score (+ new-best milestone juice)
@@ -1502,14 +2085,25 @@ function updateHUD() {
     hudEls.card.classList.remove('hidden');
     if (justShown) { hudEls.card.classList.remove('pop'); void hudEls.card.offsetWidth; hudEls.card.classList.add('pop'); }
   }
-  // items (rebuild only when the order's item set changes; done-state animates)
-  var sig = order.items.join(',');
+  // items (rebuild only when the order's item+folder+spec set changes; done-state animates)
+  var sig = order.items.map(function (id) {
+    var s = order.specs[id];
+    return id + ':' + order.folders[id] + '|' + s.color + '/' + s.align + '/' + s.brand;
+  }).join(',');
   if (sig !== hudCache.sig && hudEls.items) {
     hudCache.sig = sig;
     var html = '';
     for (var k = 0; k < order.items.length; k++) {
       var pid = order.items[k];
-      html += '<span class="oc-item"><canvas class="ic" width="24" height="18"></canvas>' + BY_ID[pid].name + '</span>';
+      var col = BY_ID[pid].color;
+      var s2 = order.specs[pid];
+      html += '<span class="oc-item"><canvas class="ic" width="24" height="18"></canvas>' +
+              '<span class="oc-item-meta">' +
+              '<span class="oc-item-name">' + BY_ID[pid].name + '</span>' +
+              '<span class="oc-item-folder"><span class="folder-ic" style="--dr-accent:' + col + '"></span>' + escapeHtml(order.folders[pid]) + '</span>' +
+              '<span class="oc-item-spec"><span class="color-dot" style="background:' + (COLOR_HEX[s2.color] || '#888888') + '"></span>' +
+              escapeHtml(s2.color + ' \u00B7 ' + s2.align + ' \u00B7 ' + s2.brand) + '</span>' +
+              '</span></span>';
     }
     hudEls.items.innerHTML = html;
     var cvs = hudEls.items.querySelectorAll ? hudEls.items.querySelectorAll('canvas.ic') : [];
@@ -1538,6 +2132,7 @@ function updateHudScale() {
   if (wrap && wrap.clientWidth) {
     document.documentElement.style.setProperty('--hud', (wrap.clientWidth / 1536).toFixed(3));
   }
+  if (drawer) positionDrawer();   // keep the open drawer glued to its machine on resize
 }
 window.addEventListener('resize', updateHudScale);
 updateHudScale();
@@ -1574,9 +2169,23 @@ function drawHint() {
     ctx.globalAlpha = a * 0.9;
     ctx.fillStyle = '#fff'; ctx.font = font(12, true);
     ctx.textAlign = 'center';
-    ctx.fillText('CLICK THE MACHINE THAT MATCHES THE ORDER!', VW / 2, VH - 34 * uiScale);
+    ctx.fillText('PICK UP THE ORDER FROM THE BELT, THEN MATCH IT TO A MACHINE!', VW / 2, VH - 34 * uiScale);
     ctx.globalAlpha = 1;
   }
+}
+/* pulsing "PICK UP!" label above the box once it has reached the pickup point */
+function drawPickupHint() {
+  if (state !== 'play') return;
+  var b = beltBoxPos();
+  if (!b || !b.ready) return;
+  var vx = b.x / WBW * VW, vy = b.y / WBH * VH;
+  var pu = 0.5 + 0.5 * Math.sin(t * 5);
+  ctx.globalAlpha = 0.5 + 0.5 * pu;
+  ctx.fillStyle = '#ffd166';
+  ctx.font = font(10, true);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.fillText('PICK UP!', vx, vy - 16 * uiScale);
+  ctx.globalAlpha = 1;
 }
 
 /* ---------------- Main render ---------------- */
@@ -1605,7 +2214,7 @@ function draw() {
 
   // 3. crisp UI
   ctx.imageSmoothingEnabled = true;
-  if (state === 'play' || state === 'paused') { drawHint(); drawMachineLabels(); drawPopups(); }
+  if (state === 'play' || state === 'paused') { drawHint(); drawPickupHint(); drawMachineLabels(); drawPopups(); }
   else if (state === 'start') drawStart();
   else if (state === 'over') drawOver();
 
@@ -1654,7 +2263,7 @@ function toWorld(e) {
 canvas.addEventListener('mousemove', function (e) {
   var p = toWorld(e);
   mouse.vx = p.vx; mouse.vy = p.vy; mouse.wx = p.wx; mouse.wy = p.wy;
-  var over = (state === 'play' && machineAt(mouse.wx, mouse.wy)) ||
+  var over = (state === 'play' && (machineAt(mouse.wx, mouse.wy) || beltBoxHit(mouse.wx, mouse.wy))) ||
              buttons.some(function (b) { return mouse.vx >= b.x && mouse.vx <= b.x + b.w && mouse.vy >= b.y && mouse.vy <= b.y + b.h; });
   canvas.style.cursor = over ? 'pointer' : 'default';
 });
@@ -1662,8 +2271,11 @@ canvas.addEventListener('click', function (e) {
   ensureAudio();
   var p = toWorld(e);
   if (state === 'play') {
-    var m = machineAt(p.wx, p.wy);
-    if (m) { clickWorld(m.id); return; }
+    if (!drawer) {
+      if (beltBoxHit(p.wx, p.wy)) { pickUpBox(); return; }   // grab the order off the belt
+      var m = machineAt(p.wx, p.wy);
+      if (m) { clickWorld(m.id); return; }
+    }
   }
   // buttons (top-most last)
   for (var i = 0; i < buttons.length; i++) {
@@ -1672,10 +2284,17 @@ canvas.addEventListener('click', function (e) {
   }
 });
 window.addEventListener('keydown', function (e) {
-  if (e.key === 'm' || e.key === 'M') { muted = !muted; }
+  if (e.key === 'm' || e.key === 'M') {
+    muted = !muted;
+    if (muted) stopMusic();
+    else if (state === 'play' || state === 'paused') startMusic();
+  }
   if ((e.key === 'p' || e.key === 'P' || e.key === 'Escape') && (state === 'play' || state === 'paused')) togglePause();
   if ((e.key === 'Enter' || e.key === ' ') && state === 'start') startGame();
 });
+// stop the music the moment the player leaves the game (close tab / navigate away)
+window.addEventListener('pagehide', stopMusic);
+window.addEventListener('beforeunload', stopMusic);
 
 /* ---------------- Loop ---------------- */
 var last = performance.now();
@@ -1698,14 +2317,22 @@ window.__PRINT_RUSH__ = {
   get order() { return order; },
   get worker() { return worker; },
   get runner() { return runner; },
+  get drawer() { return drawer; },
+  get musicOn() { return musicOn; },
+  get beltBox() { return beltBoxPos(); },
   get VW() { return VW; },
   get VH() { return VH; },
   start: startGame,
   pause: togglePause,
   click: clickWorld,
+  pickUp: pickUpBox,
+  pickFolder: drawerPick,
   tick: function (dt) { update(dt); },
   machineAt: machineAt,
-  machines: MACHINES
+  machines: MACHINES,
+  folders: FOLDERS,
+  specs: FOLDER_SPECS,
+  aligns: ALIGNS
 };
 
 })();
