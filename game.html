@@ -580,7 +580,27 @@ var orderDelay = 0;             // countdown before next order spawns
 var beltT = 0;                  // belt-ride progress of the current order's box
 var BELT_RIDE = 1.8;            // seconds the box rides along the belt
 var BELT_DROP = 0.35;           // seconds the box takes dropping off the belt
-var worker = { x: 192, y: 118, hx: 192, hy: 118, state: 'idle', pending: null, opT: 0, bob: 0, handoffDone: false };
+var missing = false;            // true while the "lost order" animation plays
+var missAnim = null;            // { phase:'ride'|'drop'|'carry', t, dur, sx, sy }
+var operators = [
+  { mid: 'cards',     x: 86,  y: 115, state: 'idle', opT: 0, bob: 0 },
+  { mid: 'flyers',    x: 86,  y: 181, state: 'idle', opT: 0, bob: 0 },
+  { mid: 'posters',   x: 298, y: 115, state: 'idle', opT: 0, bob: 0 },
+  { mid: 'books',     x: 298, y: 181, state: 'idle', opT: 0, bob: 0 },
+  { mid: 'packaging', x: 150, y: 193, state: 'idle', opT: 0, bob: 0 }
+];
+function operatorFor(mid) {
+  for (var i = 0; i < operators.length; i++) if (operators[i].mid === mid) return operators[i];
+  return null;
+}
+/* each machine's attendant: cap in the machine's color, own hair/shirt for personality */
+var OPERATOR_LOOKS = {
+  cards:     { hair: '#3a2a1a', hairHi: '#5a4230', capShade: '#2a5cae', shirt: '#e8e8f0', shirtShade: '#c9c9d4', shirtHi: '#ffffff' },
+  flyers:    { hair: '#6b3a1f', hairHi: '#8f5733', capShade: '#b02f7c', shirt: '#f2eef5', shirtShade: '#d5cddd', shirtHi: '#ffffff' },
+  posters:   { hair: '#1f1f28', hairHi: '#3a3a48', capShade: '#b56a16', shirt: '#d8d8e0', shirtShade: '#b8b8c2', shirtHi: '#f2f2f8' },
+  books:     { hair: '#4a4a55', hairHi: '#6a6a78', capShade: '#713a86', shirt: '#e4ddf2', shirtShade: '#c6bcdd', shirtHi: '#faf8ff' },
+  packaging: { hair: '#7a4a20', hairHi: '#9a6a3a', capShade: '#1f9e55', shirt: '#e2f0e8', shirtShade: '#c0d8c8', shirtHi: '#ffffff' }
+};
 var runner = { x: 192, y: 48, hx: 192, hy: 48, state: 'wait', box: false, pending: null, opT: 0, bob: 0, dx: 0, dy: 0 };
 var particles = [], popups = [], flying = [];
 var shakeT = 0, flashT = 0, hintT = 6;
@@ -792,10 +812,10 @@ function startGame() {
   startMusic();
   score = 0; streak = 0; combo = 1; hearts = 3; level = 1; ordersDone = 0;
   order = null; orderDelay = 0.4; particles = []; popups = []; flying = [];
-  worker.state = 'idle'; worker.pending = null; worker.handoffDone = false;
-  worker.x = worker.hx = 192; worker.y = worker.hy = 118;
+  operators.forEach(function (op) { op.state = 'idle'; op.opT = 0; });
   runner.state = 'wait'; runner.box = false; runner.pending = null;
   runner.x = runner.hx = 192; runner.y = runner.hy = 48;
+  missing = false; missAnim = null;
   hintT = 6; shakeT = 0; flashT = 0;
   newBestShown = false;
   hudCache.score = -1; hudCache.level = -1; hudCache.combo = -1;
@@ -821,9 +841,7 @@ function completeItem(mid) {
   popup(prod.name, m, '#7dffa8');
   popup('+' + pts + (combo > 1 ? '  x' + combo : ''), m, '#ffd166');
   SFX.correct();
-  // drawer flow: the worker waited beside the machine -> send him back to his post
-  worker.pending = null; worker.handoffDone = false;
-  worker.state = 'walk'; worker.hx = 192; worker.hy = 118;
+  // the machine's own operator handled this one — everyone stays at their post
   if (order.done.length === order.items.length) {
     ordersDone++;
     var nl = levelFor(ordersDone);
@@ -856,16 +874,34 @@ function applyResult(mid) {
   if (isCorrectMachine(mid)) completeItem(mid);
   else wrongMachine(mid);
 }
-function missOrder() {
-  if (drawer) closeDrawer(true);
-  hearts--;
-  streak = 0; combo = 1;
+/* time ran out: the order is lost — it rides down the OTHER half of the belt
+   and falls off the far end before the heart is taken */
+function startMissAnim() {
+  if (missing || !order) return;
+  var b = beltBoxPos();                    // read the box position BEFORE the missing flag hides it
+  missing = true;
+  SFX.miss();
   shakeT = 0.35; flashT = 0.3;
   popup('ORDER MISSED!', { x: WBW / 2, y: 90 }, '#ff6b6b');
-  SFX.miss();
-  worker.pending = null; worker.handoffDone = false;
-  worker.state = 'idle';
-  worker.hx = 192; worker.hy = 118;
+  if (drawer) closeDrawer(true);
+  if (runner.box) {
+    // the runner carries the lost order to the far end of the belt and drops it
+    runner.state = 'carryback';
+    runner.hx = 372; runner.hy = 42;
+    missAnim = { phase: 'carry', t: 0, dur: 0 };
+  } else {
+    var sx = b ? b.x : 192, sy = b ? b.y : 14;
+    missAnim = { phase: 'ride', t: 0, dur: Math.max(0.45, (376 - sx) / 190), sx: sx, sy: sy };
+  }
+}
+/* the lost box has fallen off the belt: now the miss actually counts */
+function finishMiss() {
+  missAnim = null;
+  missing = false;
+  hearts--;
+  streak = 0; combo = 1;
+  burst(376, 46, '#ff6b6b', 8);
+  operators.forEach(function (op) { op.state = 'idle'; op.opT = 0; });
   runner.box = false; runner.pending = null;
   runner.state = 'return';
   runner.hx = 192; runner.hy = 48;
@@ -878,8 +914,23 @@ function missOrder() {
     nextOrderSoon();
   }
 }
+/* position of the box while it rides the far half of the belt on the way out */
+function missBoxPos() {
+  if (!missAnim) return null;
+  if (missAnim.phase === 'ride') {
+    var u = Math.min(1, missAnim.t / missAnim.dur);
+    var e = 1 - Math.pow(1 - u, 2);
+    return { x: missAnim.sx + (376 - missAnim.sx) * e, y: 14 };
+  }
+  if (missAnim.phase === 'drop') {
+    var v = Math.min(1, missAnim.t / missAnim.dur);
+    return { x: 376, y: 14 + v * 34 };
+  }
+  return null;                          // carry phase: the runner holds it
+}
 function clickWorld(mid) {
   if (drawer) return;                     // a drawer is open: finish picking a folder first
+  if (missing) return;                    // the order is being lost — no new deliveries
   if (!order) return;
   if (order.done.indexOf(mid) >= 0) return;
   if (runner.state === 'deliver' || runner.state === 'handoff') return;   // busy
@@ -890,13 +941,7 @@ function clickWorld(mid) {
     return;
   }
   var m = machineById(mid);
-  // operator walks to the machine
-  worker.pending = mid;
-  worker.handoffDone = false;
-  worker.state = 'walk';
-  worker.hx = m.x + m.w / 2 - 3;
-  worker.hy = m.y + m.h / 2 + 2;
-  // runner carries the order over
+  // the runner carries the order over; that machine's own operator handles it
   runner.pending = mid;
   runner.state = 'deliver';
   runnerDeliverTarget(mid);
@@ -912,7 +957,7 @@ function runnerDeliverTarget(mid) {
 /* the order's box rides along the belt from the left end to the centre, drops
    off the belt edge, and waits — pulsing — until the player clicks to pick it up */
 function beltBoxPos() {
-  if (!order || runner.box || drawer) return null;
+  if (!order || runner.box || drawer || missing) return null;
   var x = 8, y = 14;                    // spawn: left end of the belt
   if (beltT >= BELT_RIDE) {
     x = 192;
@@ -932,7 +977,7 @@ function beltBoxHit(wx, wy) {
   return wx >= b.x - 20 && wx <= b.x + 20 && wy >= b.y - 9 && wy <= b.y + 9;
 }
 function pickUpBox() {
-  if (!order || state !== 'play' || drawer) return;
+  if (!order || state !== 'play' || drawer || missing) return;
   if (runner.box || runner.state === 'deliver' || runner.state === 'handoff' || runner.state === 'fetch') return;
   if (!beltBoxPos() || !beltBoxPos().ready) return;
   SFX.pickup();
@@ -1120,40 +1165,22 @@ function update(dt) {
   if (shakeT > 0) shakeT -= dt;
   if (hintT > 0 && state === 'play') hintT -= dt;
 
-  // worker (operator) + runner (order carrier) choreography
+  // operators (each machine's attendant) + runner (order carrier) choreography
   if (state === 'play') {
-    // --- worker: walks to the machine, operates once the box is handed off ---
-    if (worker.state === 'walk') {
-      var dx = worker.hx - worker.x, dy = worker.hy - worker.y;
-      var d = Math.sqrt(dx * dx + dy * dy);
-      var sp = 150 * dt;
-      if (d <= sp) {
-        worker.x = worker.hx; worker.y = worker.hy;
-        if (worker.handoffDone) { beginOperate(); }
-        else { worker.state = 'standby'; }
-      } else {
-        worker.x += dx / d * sp; worker.y += dy / d * sp;
+    // --- operators: wrong deliveries make their machine's operator print ---
+    for (var oi = 0; oi < operators.length; oi++) {
+      var op = operators[oi];
+      if (op.state === 'operate') {
+        op.opT -= dt;
+        var om = machineById(op.mid);
+        if (om) om.flash = Math.max(om.flash, 0.35);
+        if (op.opT <= 0) {
+          op.state = 'idle';
+          applyResult(op.mid);          // wrong machine: penalty lands here
+        }
       }
-    } else if (worker.state === 'standby') {
-      if (worker.handoffDone) { beginOperate(); }
-    } else if (worker.state === 'operate') {
-      worker.opT -= dt;
-      var m = worker.pending ? machineById(worker.pending) : null;
-      if (m) m.flash = Math.max(m.flash, 0.35);
-      if (worker.opT <= 0) {
-        var pid = worker.pending;
-        worker.pending = null; worker.handoffDone = false;
-        worker.state = 'walk';
-        worker.hx = 192; worker.hy = 118; // back to post
-        if (pid) applyResult(pid);
-      }
-    } else {
-      // idle: drift back to post
-      var ddx = 192 - worker.x, ddy = 118 - worker.y;
-      var dd = Math.sqrt(ddx * ddx + ddy * ddy);
-      if (dd > 2) { worker.x += ddx / dd * 60 * dt; worker.y += ddy / dd * 60 * dt; }
+      op.bob += dt * (op.state === 'operate' ? 12 : 3);
     }
-    worker.bob += dt * (worker.state === 'walk' ? 9 : 3);
 
     // --- runner: fetches the box only after the PLAYER picks it up from the belt ---
     switch (runner.state) {
@@ -1183,11 +1210,21 @@ function update(dt) {
           if (isCorrectMachine(hm)) {
             openDrawer(hm);               // right machine: the drawer slides out with its folders
           } else {
-            worker.handoffDone = true;    // wrong machine: operator prints, penalty at the end
+            var wop = operatorFor(hm);    // wrong machine: its operator prints, penalty at the end
+            if (wop) { wop.state = 'operate'; wop.opT = 0.5; beginOperate(hm); }
             SFX.print();
           }
           runner.state = 'return';
           runner.hx = 192; runner.hy = 48;
+        }
+        break;
+      case 'carryback':
+        if (moveToward(runner, 372, 42, 165, dt)) {
+          runner.box = false;                       // drop the lost order at the far end
+          runner.state = 'return';
+          runner.hx = 192; runner.hy = 48;
+          missAnim = { phase: 'drop', t: 0, dur: 0.35 };
+          burst(372, 38, '#ff6b6b', 6);
         }
         break;
       case 'return':
@@ -1196,18 +1233,27 @@ function update(dt) {
         }
         break;
     }
-    runner.bob += dt * ((runner.state === 'fetch' || runner.state === 'deliver' || runner.state === 'return') ? 9 : 3);
+    runner.bob += dt * ((runner.state === 'fetch' || runner.state === 'deliver' || runner.state === 'return' || runner.state === 'carryback') ? 9 : 3);
 
     // order spawn
     if (!order) {
       orderDelay -= dt;
       if (orderDelay <= 0) makeOrder();
-    } else {
+    } else if (!missing) {
       order.timer -= dt;
-      if (order.timer <= 0) { order.timer = 0; missOrder(); }
+      if (order.timer <= 0) { order.timer = 0; startMissAnim(); }
     }
     // the order's box rides the belt until the player picks it up
-    if (order && !runner.box && !drawer) beltT += dt;
+    if (order && !runner.box && !drawer && !missing) beltT += dt;
+    // lost-order animation: the box rides down the OTHER half of the belt and falls off
+    if (missing && missAnim) {
+      missAnim.t += dt;
+      if (missAnim.phase === 'ride' && missAnim.t >= missAnim.dur) {
+        missAnim.phase = 'drop'; missAnim.t = 0; missAnim.dur = 0.35;
+      } else if (missAnim.phase === 'drop' && missAnim.t >= missAnim.dur) {
+        finishMiss();
+      }
+    }
   }
 
   // machines decay
@@ -1520,19 +1566,21 @@ function drawHuman(opt, x, y) {
     rr(wctx, q[0], q[1], q[2], q[3], q[4]);
   }
 }
-function drawWorker() {
+/* each machine's attendant: Stardew-style human, cap in the machine's color */
+function drawOperator(op) {
+  var look = OPERATOR_LOOKS[op.mid];
   drawHuman({
     outline: '#15151d',
     skin: '#f2c9a0', skinShade: '#d9a878',
-    hair: '#5a3d26', hairHi: '#7a5538',
-    cap: '#c5047e', capShade: '#a5036a',
-    shirt: '#e8e8ee', shirtShade: '#b9b9c4', shirtHi: '#ffffff',
+    hair: look.hair, hairHi: look.hairHi,
+    cap: BY_ID[op.mid].color, capShade: look.capShade,
+    shirt: look.shirt, shirtShade: look.shirtShade, shirtHi: look.shirtHi,
     pants: '#3a3f4c', boot: '#4a3b33',
-    walk: worker.state === 'walk',
-    operate: worker.state === 'operate',
+    walk: false,
+    operate: op.state === 'operate',
     carry: false,
-    bob: worker.bob
-  }, worker.x, worker.y);
+    bob: op.bob
+  }, op.x, op.y);
 }
 function drawWorld() {
   // LAYER 0 — floor, decor, conveyor, dust, belt box (under everything)
@@ -1553,6 +1601,9 @@ function drawWorld() {
       rr(wctx, bbox.x - 2, bbox.y - 12, 4, 4, 'rgba(255,209,102,' + (0.3 + 0.45 * pu).toFixed(2) + ')');
     }
   }
+  // a lost order: the box rides down the other half of the belt and falls off the end
+  var mpos = missBoxPos();
+  if (mpos) drawOrderBox(mpos.x - 20, mpos.y - 9, 40, 18);
 
   // LAYER 2 — entities, depth-sorted: machines anchor at their mid-line,
   // characters at their feet — so a character above a machine is drawn
@@ -1565,7 +1616,9 @@ function drawWorld() {
       ents.push({ y: m.y + m.h * 0.5, fn: function () { drawMachine(m); } });
     })(MACHINES[i]);
   }
-  ents.push({ y: worker.y, fn: drawWorker });
+  for (var oi2 = 0; oi2 < operators.length; oi2++) {
+    (function (op) { ents.push({ y: op.y, fn: function () { drawOperator(op); } }); })(operators[oi2]);
+  }
   ents.push({ y: runner.y, fn: drawRunner });
   ents.sort(function (a, b) { return a.y - b.y; });
   for (var j = 0; j < ents.length; j++) ents[j].fn();
@@ -1595,7 +1648,7 @@ function drawRunner() {
     outline: '#15151d',
     skin: '#f2c9a0', skinShade: '#d9a878',
     hair: '#2a2a33', hairHi: '#4a4a55',
-    cap: '#f0932b', capShade: '#c56a28',
+    cap: '#3a3f4c', capShade: '#2c2f38',   // neutral cap — he works the belt, not a machine
     shirt: '#e8863a', shirtShade: '#c56a28', shirtHi: '#ffd166',
     stripe: '#ffd166',
     pants: '#3a3f4c', boot: '#4a3b33',
@@ -1859,7 +1912,9 @@ function drawEntityShadows() {
     drawSoftShadow((m.x + m.w / 2) * kx, (m.y + m.h * 0.62) * ky,
       m.w * 0.42 * kx, m.h * 0.26 * ky, 22, 12, 0.42);
   }
-  drawSoftShadow(worker.x * kx, worker.y * ky, 11 * kx, 4.4 * ky, 9, 5, 0.4);
+  for (var si = 0; si < operators.length; si++) {
+    drawSoftShadow(operators[si].x * kx, operators[si].y * ky, 11 * kx, 4.4 * ky, 9, 5, 0.4);
+  }
   drawSoftShadow(runner.x * kx, runner.y * ky, 11 * kx, 4.4 * ky, 9, 5, 0.4);
 }
 
@@ -2153,10 +2208,9 @@ function smoke(x, y, n) {
     });
   }
 }
-/* worker starts printing: sparks + smoke burst from the machine */
-function beginOperate() {
-  worker.state = 'operate'; worker.opT = 0.5;
-  var m = worker.pending ? machineById(worker.pending) : null;
+/* the machine's operator starts printing: sparks + smoke burst from the machine */
+function beginOperate(mid) {
+  var m = machineById(mid);
   if (m) {
     smoke(m.x + m.w / 2, m.y + 2, 6);
     burst(m.x + m.w / 2, m.y + 4, BY_ID[m.id].color, 6);
@@ -2315,10 +2369,14 @@ window.__PRINT_RUSH__ = {
   get level() { return level; },
   get ordersDone() { return ordersDone; },
   get order() { return order; },
-  get worker() { return worker; },
+  get operators() { return operators; },
   get runner() { return runner; },
+  operatorFor: operatorFor,
   get drawer() { return drawer; },
   get musicOn() { return musicOn; },
+  get missing() { return missing; },
+  get missAnim() { return missAnim; },
+  get beltT() { return beltT; },
   get beltBox() { return beltBoxPos(); },
   get VW() { return VW; },
   get VH() { return VH; },
